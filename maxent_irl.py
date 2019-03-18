@@ -30,20 +30,20 @@ def compute_state_visition_freq(P_a, gamma, trajs, policy, deterministic=True):
   returns:
     p       Nx1 vector - state visitation frequencies
   """
-  N_STATES, _, N_ACTIONS = np.shape(P_a)
+  N_STATES, _, N_ACTIONS = np.shape(P_a)#转移概率
 
   T = len(trajs[0])
   # mu[s, t] is the prob of visiting state s at time t
-  mu = np.zeros([N_STATES, T]) 
+  mu = np.zeros([N_STATES, T]) #用于统计状态s出现的概率
 
   for traj in trajs:
     mu[traj[0].cur_state, 0] += 1
-  mu[:,0] = mu[:,0]/len(trajs)
+  mu[:,0] = mu[:,0]/len(trajs)#初始状态出现的概率
 
   for s in range(N_STATES):
     for t in range(T-1):
-      if deterministic:
-        mu[s, t+1] = sum([mu[pre_s, t]*P_a[pre_s, s, int(policy[pre_s])] for pre_s in range(N_STATES)])
+      if deterministic:#基于确定性概率图转换
+        mu[s, t+1] = sum([mu[pre_s, t]*P_a[pre_s, s, int(policy[pre_s])] for pre_s in range(N_STATES)])#从前一个状态转移到当前state
       else:
         mu[s, t+1] = sum([sum([mu[pre_s, t]*P_a[pre_s, s, a1]*policy[pre_s, a1] for a1 in range(N_ACTIONS)]) for pre_s in range(N_STATES)])
   p = np.sum(mu, 1)
@@ -96,12 +96,12 @@ def maxent_irl(feat_map, P_a, gamma, trajs, lr, n_iters):
     svf = compute_state_visition_freq(P_a, gamma, trajs, policy, deterministic=False)
     
     # compute gradients
-    grad = feat_exp - feat_map.T.dot(svf)
+    grad = feat_exp - feat_map.T.dot(svf)#梯度下降的方向是真实值减去策略得到的奖励值
 
     # update params
     theta += lr * grad
 
-  rewards = np.dot(feat_map, theta)
+  rewards = np.dot(feat_map, theta)#
   # return sigmoid(normalize(rewards))
   return normalize(rewards)
 
